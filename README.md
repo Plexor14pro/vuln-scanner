@@ -6,38 +6,51 @@
 
 <h1 align="center">VulnScan</h1>
 
-<p align="center">Scan your source code for security vulnerabilities before deploying.</p>
+<p align="center">Lightweight security scanner for source code. Upload your project and find vulnerabilities before deploying.</p>
 
 ---
 
 ### About
 
-VulnScan is a lightweight web-based security scanner that analyzes source code for common vulnerabilities. Upload a `.zip` file or individual source files and get an instant report with severity ratings, descriptions, and fix suggestions.
+VulnScan is a web-based tool that scans source code for security vulnerabilities. Upload a `.zip` file or individual source files and get an instant report with severity ratings, line numbers, and fix recommendations.
 
-### Features
+Built for developers, students, and teams who need a quick security check before deploying.
 
-- Upload `.zip` archives or individual files
-- Scans multiple languages (Python, JavaScript, Java, PHP, Go, Ruby, C, and more)
-- 15+ vulnerability rules covering:
-  - Hardcoded secrets & API keys
-  - SQL injection
-  - Cross-Site Scripting (XSS)
-  - Command injection
-  - Path traversal
-  - Insecure cryptography
-  - AWS key exposure
-  - Insecure deserialization
-  - And more
-- Severity ratings: CRITICAL, HIGH, MEDIUM, LOW
-- Code snippets with line numbers
-- Fix recommendations for each finding
-- Clean, modern dark UI
+### How It Works
+
+1. **Upload** — Drag and drop a `.zip` archive or select a source code file
+2. **Scan** — The engine analyzes every line against 15 vulnerability rules using regex pattern matching
+3. **Report** — Results are sorted by severity with code snippets, descriptions, and how to fix each issue
+
+### Vulnerability Rules
+
+| ID | Severity | What It Detects |
+|---|---|---|
+| SEC001 | CRITICAL | Hardcoded passwords and secrets |
+| SEC002 | CRITICAL | Exposed private keys |
+| SEC003 | HIGH | SQL injection patterns |
+| SEC004 | HIGH | Cross-Site Scripting (XSS) |
+| SEC005 | HIGH | Command injection |
+| SEC006 | MEDIUM | Insecure HTTP usage |
+| SEC007 | MEDIUM | Weak cryptographic hashes (MD5, SHA1) |
+| SEC008 | MEDIUM | Debug mode enabled |
+| SEC009 | MEDIUM | CORS wildcard configuration |
+| SEC010 | LOW | TODO/FIXME with security notes |
+| SEC011 | HIGH | Path traversal |
+| SEC012 | CRITICAL | AWS keys exposed |
+| SEC013 | MEDIUM | Insecure deserialization (pickle, yaml.load) |
+| SEC014 | LOW | Missing error handling |
+| SEC015 | HIGH | Insecure file upload |
+
+### Supported Languages
+
+Python, JavaScript, TypeScript, Java, PHP, Ruby, Go, Rust, C, C++, C#, Shell, YAML, JSON, XML, HTML, SQL, Terraform, Dockerfile
 
 ### Tech Stack
 
 - **Backend:** Python, Flask
-- **Frontend:** HTML, CSS, JavaScript
-- **Scanning:** Regex-based pattern matching
+- **Frontend:** HTML, CSS, JavaScript (vanilla)
+- **Scanning:** Regex-based pattern matching (no external dependencies)
 
 ### Installation
 
@@ -50,16 +63,22 @@ python app.py
 
 Open `http://localhost:5000` in your browser.
 
-### Usage
+### Project Structure
 
-1. Open the app in your browser
-2. Drag and drop a `.zip` file or click to browse
-3. Wait for the scan to complete
-4. Review the findings sorted by severity
+```
+vuln-scanner/
+├── app.py              # Scanning engine + Flask routes
+├── requirements.txt    # Dependencies
+├── README.md           # Documentation
+├── static/
+│   └── style.css       # Dark UI styling
+└── templates/
+    └── index.html      # Upload interface + results
+```
 
 ### Roadmap
 
-- [ ] Support for more languages and frameworks
+- [ ] Support for more language-specific patterns
 - [ ] Dependency vulnerability checking
 - [ ] PDF report export
 - [ ] CLI version
