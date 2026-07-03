@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VulnScan - Vulnerability Scanner</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <h1>VulnScan</h1>
+            </div>
+            <p class="tagline">Scan your code for security vulnerabilities</p>
+        </header>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+            </div>
+            <p>Drop a <strong>.zip</strong> file or any source code file here</p>
+            <p class="upload-hint">or click to browse</p>
+            <input type="file" id="fileInput" accept=".zip,.py,.js,.ts,.jsx,.tsx,.java,.php,.rb,.go,.rs,.c,.cpp,.cs,.sh,.yml,.yaml,.json,.xml,.env,.sql,.html,.vue,.svelte,.tf" hidden>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Scanning for vulnerabilities...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="results-header">
+                <h2>Scan Results</h2>
+                <div class="severity-badges" id="severityBadges"></div>
+            </div>
+            <p class="scan-summary" id="scanSummary"></p>
+            <div class="findings-list" id="findingsList"></div>
+        </div>
+    </div>
+
+    <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    const results = document.getElementById('results');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            scanFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            scanFile(fileInput.files[0]);
+        }
+    });
+
+    function scanFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        uploadArea.style.display = 'none';
+        loading.style.display = 'flex';
+        error.style.display = 'none';
+        results.style.display = 'none';
+
+        fetch('/scan', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                loading.style.display = 'none';
+                if (data.error) {
+                    error.textContent = data.error;
+                    error.style.display = 'block';
+                    uploadArea.style.display = 'flex';
+                    return;
+                }
+                showResults(data);
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                error.textContent = 'Connection error. Try again.';
+                error.style.display = 'block';
+                uploadArea.style.display = 'flex';
+            });
+    }
+
+    function showResults(data) {
+        results.style.display = 'block';
+
+        const badges = document.getElementById('severityBadges');
+        badges.innerHTML = '';
+        const colors = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#6b7280' };
+        for (const [sev, count] of Object.entries(data.severity_count)) {
+            if (count > 0) {
+                badges.innerHTML += `<span class="badge" style="background:${colors[sev]}">${sev}: ${count}</span>`;
+            }
+        }
+
+        document.getElementById('scanSummary').textContent =
+            `Scanned ${data.scanned_files} files — ${data.total_findings} vulnerabilities found`;
+
+        const list = document.getElementById('findingsList');
+        list.innerHTML = '';
+        if (data.findings.length === 0) {
+            list.innerHTML = '<div class="no-findings">No vulnerabilities found. Your code looks clean!</div>';
+            return;
+        }
+        data.findings.forEach(f => {
+            list.innerHTML += `
+                <div class="finding severity-${f.severity.toLowerCase()}">
+                    <div class="finding-header">
+                        <span class="badge" style="background:${colors[f.severity]}">${f.severity}</span>
+                        <span class="finding-title">${f.title}</span>
+                        <span class="finding-rule">${f.rule_id}</span>
+                    </div>
+                    <div class="finding-meta">${f.file} : line ${f.line}</div>
+                    <div class="finding-code"><code>${escapeHtml(f.code)}</code></div>
+                    <div class="finding-desc">${f.description}</div>
+                    <div class="finding-fix"><strong>Fix:</strong> ${f.fix}</div>
+                </div>`;
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    </script>
+</body>
+</html>
